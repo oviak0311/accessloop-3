@@ -5181,3 +5181,14 @@ h2 {
     box-shadow: none;
   }
 }
+   /* Home: legend at the bottom left, lined up with the trip planner */
+   @media (min-width: 801px) {
+     .home-app .map-legend {
+       left: 20px;
+     }
+     /* When results or a barrier's details fill the left column, hide it so it isn't covered */
+     .home-app:not([data-sheet="hidden"]) .map-legend {
+       display: none;
+     }
+   }
+   
