@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AccessLoop · Explore barriers</title>
+  <meta name="description" content="Explore active and past accessibility barriers on a map of Toronto’s stations and stops.">
+  <meta name="theme-color" content="#14213d">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="vendor/leaflet/leaflet.js" defer></script>
+  <script type="module" src="js/explore.js"></script>
+</head>
+<body class="map-page">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"></header>
+
+  <main id="main-content" class="app-map explore-app" data-view="list">
+    <a class="map-skip" href="#sheet">Skip the map to the results panel</a>
+    <div id="map" class="leaflet-map" role="region" aria-label="Map of reported barriers"></div>
+
+    <!-- Desktop: one floating card on the left (search on top, results below).
+         Phones: the search sits at the top and the results become a bottom sheet. -->
+    <div class="side-panel">
+      <section class="explore-filter-overlay" id="filters" aria-labelledby="explore-title">
+        <div class="filter-head">
+          <div>
+            <p class="eyebrow">Shared logbook</p>
+            <h1 id="explore-title">Explore barriers</h1>
+          </div>
+          <button type="button" class="filter-toggle" aria-expanded="false" aria-controls="filter-row">
+            <span data-icon="filter" data-size="18"></span>Filters
+          </button>
+        </div>
+        <form id="filter-form" role="search" aria-label="Filter reports">
+          <label class="search-box" for="q">
+            <span class="sr-only">Search reports, stops or lines</span>
+            <span data-icon="search" data-size="22"></span>
+            <input id="q" name="q" type="search" placeholder="Search reports, stops or lines" autocomplete="off">
+          </label>
+          <div class="filter-row" id="filter-row">
+            <label>Report status
+              <select name="status">
+                <option value="">All</option>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label>Barrier kind
+              <select name="kind">
+                <option value="">All</option>
+                <option value="EQUIPMENT">Broken equipment</option>
+                <option value="CONDITION">Temporary condition</option>
+                <option value="INFRASTRUCTURE">Missing infrastructure</option>
+              </select>
+            </label>
+          </div>
+        </form>
+      </section>
+      <section class="sheet" id="sheet" data-state="half" aria-labelledby="sheet-title">
+        <div class="sheet-bar">
+          <button type="button" class="sheet-handle" aria-expanded="true" aria-controls="sheet-body">
+            <span class="sheet-grip" aria-hidden="true"></span>
+            <span class="sheet-title" id="sheet-title">Loading…</span>
+            <span class="sheet-chevron" data-icon="expand" data-size="18"></span>
+          </button>
+          <button type="button" class="sheet-expand" aria-label="Make the panel bigger">
+            <span data-icon="expand" data-size="18"></span>
+          </button>
+        </div>
+        <div class="sheet-body" id="sheet-body"></div>
+      </section>
+    </div>
+
+    <div class="map-legend" id="map-legend" role="group" aria-label="Map pin legend"></div>
+
+    <button class="floating-report" id="report-button" type="button" aria-expanded="false" aria-controls="quick-report">
+      <span><span data-icon="plus" data-size="26"></span></span>Report
+    </button>
+    <dialog class="quick-report" id="quick-report" aria-labelledby="quick-report-title"></dialog>
+
+    <p class="sr-only" id="app-status" role="status" aria-live="polite"></p>
+  </main>
+
+</body>
+</html>

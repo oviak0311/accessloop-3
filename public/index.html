@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AccessLoop · Check before you go</title>
+  <meta name="description" content="A map of transit accessibility barriers in Toronto. Plan a trip, see reported barriers on every route, and report what you find.">
+  <meta name="theme-color" content="#14213d">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="vendor/leaflet/leaflet.js" defer></script>
+  <script type="module" src="js/home.js"></script>
+</head>
+<body class="map-page">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"></header>
+
+  <main id="main-content" class="app-map home-app" data-mode="planning" data-view="map">
+    <h1 class="sr-only">AccessLoop map: plan a trip and check for barriers</h1>
+
+    <!-- Desktop: a floating column on the left, the journey planner on top and the results below.
+         Phones: the planner sits at the top and the results become a bottom sheet. -->
+    <div class="side-panel">
+      <!-- Floating journey planner, top left. After planning it shrinks to a one-line summary. -->
+      <section class="planner-card" id="planner" aria-label="Journey planner">
+        <form class="trip-planner" id="trip-planner" novalidate aria-labelledby="planner-title">
+          <div class="planner-head">
+            <h2 id="planner-title">Plan a trip</h2>
+            <button type="button" class="icon-round" data-action="close-planner" aria-label="Clear this trip" hidden>
+              <span data-icon="close"></span>
+            </button>
+          </div>
+          <div class="journey-fields">
+            <span class="journey-field-line" aria-hidden="true"></span>
+            <div class="journey-field">
+              <label class="sr-only" for="from-input">Starting point</label>
+              <span class="journey-input">
+                <i aria-hidden="true"></i>
+                <input id="from-input" type="search" autocomplete="off" placeholder="Starting point"
+                  role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-results">
+                <button type="button" data-action="locate-from" aria-label="Use my location as the starting point">
+                  <span data-icon="location" data-size="19"></span>
+                </button>
+              </span>
+              <ul class="journey-suggestions" id="from-results" role="listbox" aria-label="Starting points" hidden></ul>
+            </div>
+            <div class="journey-field">
+              <label class="sr-only" for="to-input">Destination</label>
+              <span class="journey-input is-destination">
+                <i aria-hidden="true"></i>
+                <input id="to-input" type="search" autocomplete="off" placeholder="Destination"
+                  role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-results">
+              </span>
+              <ul class="journey-suggestions" id="to-results" role="listbox" aria-label="Destinations" hidden></ul>
+            </div>
+            <button type="button" class="swap-button" data-action="swap">
+              <span data-icon="swap" data-size="19"></span><span>Swap start and destination</span>
+            </button>
+          </div>
+          <div class="planner-options">
+            <label class="pref-chip">
+              <input type="checkbox" id="step-free" checked>
+              <span><span data-icon="wheelchair" data-size="18"></span>Step-free</span>
+            </label>
+            <label class="departure-field">
+              <span class="sr-only">When</span>
+              <span data-icon="clock" data-size="18"></span>
+              <select id="when">
+                <option value="now">Leave now</option>
+                <option value="depart">Leave at</option>
+                <option value="arrive">Arrive by</option>
+              </select>
+            </label>
+            <input type="datetime-local" id="when-time" class="when-time" aria-label="Date and time" hidden>
+          </div>
+          <div id="planner-error"></div>
+          <button class="button planner-submit" type="submit">Find routes <span data-icon="arrow"></span></button>
+          <p class="planner-privacy">What you type is sent to free map services (Transitous, and Photon for street addresses) to find places and routes. AccessLoop doesn’t save it.</p>
+        </form>
+
+        <button type="button" class="planner-summary" id="planner-summary" data-action="edit-trip" hidden>
+          <span class="planner-summary-route">
+            <span class="summary-end"><b aria-hidden="true">A</b><span><small>From</small><span id="summary-from"></span></span></span>
+            <span class="summary-line" aria-hidden="true"></span>
+            <span class="summary-end"><b class="to" aria-hidden="true">B</b><span><small>To</small><span id="summary-to"></span></span></span>
+          </span>
+          <span class="planner-summary-meta"><span id="summary-meta"></span> · <span class="planner-summary-edit">Edit trip</span></span>
+        </button>
+      </section>
+      <!-- Results panel: route options and your route, or a barrier's details.
+           Hidden while there's nothing to show, so the map fills the screen. -->
+      <section class="sheet" id="sheet" data-state="half" aria-labelledby="sheet-title" hidden>
+        <div class="sheet-bar">
+          <button type="button" class="sheet-handle" aria-expanded="true" aria-controls="sheet-body">
+            <span class="sheet-grip" aria-hidden="true"></span>
+            <span class="sheet-title" id="sheet-title"></span>
+            <span class="sheet-chevron" data-icon="expand" data-size="18"></span>
+          </button>
+          <button type="button" class="sheet-expand" aria-label="Make the panel bigger">
+            <span data-icon="expand" data-size="18"></span>
+          </button>
+        </div>
+        <div class="sheet-body" id="sheet-body"></div>
+      </section>
+    </div>
+
+    <a class="map-skip" href="#report-button">Skip the map</a>
+    <div id="map" class="leaflet-map" role="region" aria-label="Map of transit accessibility barriers"></div>
+
+    <!-- Map tools, top right (zoom buttons are added by the map) -->
+    <button class="map-tool locate-tool" id="locate-button" type="button"
+      aria-label="Locate me and centre the map. Your location stays in this browser.">
+      <span data-icon="location"></span><span id="locate-label">Locate me</span>
+    </button>
+    <div class="map-legend" id="map-legend" role="group" aria-label="Map pin legend"></div>
+
+    <!-- Report without leaving the map -->
+    <button class="floating-report" id="report-button" type="button" aria-expanded="false" aria-controls="quick-report">
+      <span><span data-icon="plus" data-size="26"></span></span>Report
+    </button>
+    <dialog class="quick-report" id="quick-report" aria-labelledby="quick-report-title"></dialog>
+
+
+    <p class="sr-only" id="app-status" role="status" aria-live="polite"></p>
+  </main>
+
+</body>
+</html>

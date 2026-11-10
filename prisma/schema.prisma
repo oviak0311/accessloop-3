@@ -1,0 +1,150 @@
+// AccessLoop database schema
+// Five tables: categories, locations, reports, status_history, responses
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled connection, used by the app
+  directUrl = env("DIRECT_URL")   // direct connection, used by migrations
+}
+
+// Each barrier type belongs to one of three kinds.
+// The kind decides which statuses and rider responses a report can have.
+enum Kind {
+  EQUIPMENT
+  CONDITION
+  INFRASTRUCTURE
+}
+
+enum LocationType {
+  SUBWAY_STATION
+  BUS_STOP
+  STREETCAR_STOP
+  STOP // a surface stop from the open data, served by buses, streetcars or both
+}
+
+enum Direction {
+  NORTHBOUND
+  SOUTHBOUND
+  EASTBOUND
+  WESTBOUND
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Status {
+  // Open statuses
+  REPORTED
+  UNDER_REVIEW
+  IN_PROGRESS
+  ACKNOWLEDGED
+  PLANNED
+  // Closing statuses
+  RESOLVED
+  CLEARED
+  BUILT
+  NOT_PLANNED
+  DUPLICATE
+  COULD_NOT_VERIFY
+}
+
+enum ResponseValue {
+  STILL_BROKEN
+  FIXED
+  STILL_PRESENT
+  CLEARED
+  STILL_MISSING
+  NOW_INSTALLED
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  kind        Kind
+  description String?
+  reports     Report[]
+
+  @@map("categories")
+}
+
+// A location is a fixed spot (one elevator, one stop in one direction).
+// Every outage at the same spot links back here, which builds its history.
+model Location {
+  id        Int          @id @default(autoincrement())
+  name      String // station or stop, e.g. "Dufferin St at Finch Ave W"
+  spot      String // e.g. "North entrance elevator" or "Bus stop"
+  direction Direction?
+  line      String?
+  type      LocationType
+  code      String?      @unique // stop number from the transit agency's open data, if it has one
+  latitude  Float? // for the map; optional so a stop can be added before it's placed
+  longitude Float?
+  reports   Report[]
+
+  @@unique([name, spot, direction])
+  @@map("locations")
+}
+
+// Each report is one incident. Titles are not stored; they are generated
+// from the barrier type and location when a report is shown.
+model Report {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  locationId  Int
+  location    Location @relation(fields: [locationId], references: [id])
+  description String?  @db.VarChar(1000)
+  severity    Severity
+  status      Status   @default(REPORTED)
+  isSample    Boolean  @default(false)
+  editKeyHash String // SHA-256 hash of the private edit key; the key itself is never stored
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime? // set only for Resolved, Cleared and Built
+
+  duplicateOfId Int?
+  duplicateOf   Report?  @relation("Duplicates", fields: [duplicateOfId], references: [id])
+  duplicates    Report[] @relation("Duplicates")
+
+  history   StatusChange[]
+  responses Response[]
+
+  @@index([status])
+  @@index([locationId])
+  @@index([categoryId])
+  @@map("reports")
+}
+
+// Written by the admin only. Deleting a report deletes its history.
+model StatusChange {
+  id        Int      @id @default(autoincrement())
+  reportId  Int
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  oldStatus Status?
+  newStatus Status
+  note      String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+  @@map("status_history")
+}
+
+// Written by riders. Never changes the official status.
+model Response {
+  id        Int           @id @default(autoincrement())
+  reportId  Int
+  report    Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  value     ResponseValue
+  createdAt DateTime      @default(now())
+
+  @@index([reportId])
+  @@map("responses")
+}
