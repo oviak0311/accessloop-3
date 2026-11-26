@@ -129,12 +129,11 @@ export function createQuickReport({ root, button, onSubmitted, onOpen }) {
       <h2 id="quick-report-title" tabindex="-1">Report sent</h2>
       <p>Thanks. You helped other riders know what’s happening here.</p>
       <div><strong>${esc(report.category.name)}</strong><span>${esc(report.location.label)}</span></div>
-      <section class="key-card quick-key" aria-labelledby="qr-key-title">
-        <h3 id="qr-key-title">Save your private edit key</h3>
-        <p>It’s shown once. You need it to change the description while the report is still Reported.</p>
-        <div class="key-row">
+      <section class="key-compact" aria-labelledby="qr-key-title">
+        <p id="qr-key-title"><strong>Want to edit it later?</strong> Save this private key. It’s only shown once.</p>
+        <div class="key-compact-row">
           <code id="qr-key">${esc(editKey)}</code>
-          <button type="button" data-action="copy">${icon(state.copied === true ? 'check' : 'copy')}${state.copied === true ? 'Copied' : 'Copy'}</button>
+          <button type="button" data-action="copy">${icon(state.copied === true ? 'check' : 'copy', 16)}${state.copied === true ? 'Copied' : 'Copy'}</button>
         </div>
         <p class="key-help" role="status">${state.copied === 'selected' ? 'The key is selected. Press Ctrl+C (or ⌘C on a Mac) to copy it.' : ''}</p>
       </section>

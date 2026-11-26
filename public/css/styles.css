@@ -2471,7 +2471,7 @@ footer nav a {
   width: 60px;
   height: 60px;
 }
-.quick-submitted > div:not(.success-icon) {
+.quick-submitted > div:not(.success-icon):not(.quick-done-head) {
   margin: 18px 0;
   padding: 12px;
   display: flex;
@@ -4054,6 +4054,54 @@ body.map-page {
 }
 .quick-key code {
   font-size: 14px;
+}
+/* The edit key, kept small: one line of text, the key and a Copy button */
+.key-compact {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f4f6f8;
+  text-align: left;
+}
+.key-compact > p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+.key-compact strong {
+  color: var(--navy);
+}
+.key-compact-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.key-compact-row code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--navy);
+  font: 600 14px monospace;
+}
+.key-compact-row button {
+  min-height: 36px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #c7ced6;
+  border-radius: 8px;
+  background: white;
+  color: var(--blue);
+  font-weight: 700;
+  cursor: pointer;
+}
+.key-compact .key-help:empty {
+  display: none;
+}
+.key-compact-page {
+  margin: 28px 0 24px;
 }
 .quick-submitted .text-link {
   margin-top: 6px;

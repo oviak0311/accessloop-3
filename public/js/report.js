@@ -298,19 +298,12 @@ function renderConfirmation() {
     <p class="eyebrow">Report added</p>
     <h1 tabindex="-1">Thanks! You just helped other riders plan their trip.</h1>
     <p>Your report is on the map and ready for the accessibility team to review.</p>
-    <section class="key-card" aria-labelledby="key-title">
-      <div class="warning-title">
-        ${icon('info')}
-        <div>
-          <h2 id="key-title">Save your private edit key</h2>
-          <p>This key is shown once. It will not be shown again.</p>
-        </div>
-      </div>
-      <div class="key-row">
+    <section class="key-compact key-compact-page" aria-labelledby="key-title">
+      <p id="key-title"><strong>Want to edit it later?</strong> Save this private key. It’s only shown once, and works while your report is still Reported.</p>
+      <div class="key-compact-row">
         <code id="edit-key">${esc(editKey)}</code>
-        <button type="button" data-action="copy">${icon(state.copied === true ? 'check' : 'copy')}${state.copied === true ? 'Copied' : 'Copy key'}</button>
+        <button type="button" data-action="copy">${icon(state.copied === true ? 'check' : 'copy', 16)}${state.copied === true ? 'Copied' : 'Copy'}</button>
       </div>
-      <p class="key-help">Use this key to change the description while your report is still marked Reported.</p>
       <p class="key-help" role="status">${
         state.copied === 'selected' ? 'The key is selected. Press Ctrl+C (or ⌘C on a Mac) to copy it.' : ''
       }</p>
