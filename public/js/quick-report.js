@@ -5,7 +5,7 @@
 // Riders aren't asked about severity anywhere: the barrier type sets it (see defaultSeverity in
 // lib/rules.js), and only the accessibility team sees it, to sort their queue.
 import { api } from './api.js';
-import { esc, icon, barrierIcon, KIND_ORDER } from './ui.js';
+import { esc, icon, barrierIcon, stopDetails, KIND_ORDER } from './ui.js';
 import { createCombobox } from './combobox.js';
 
 export function createQuickReport({ root, button, onSubmitted, onOpen }) {
@@ -76,7 +76,7 @@ export function createQuickReport({ root, button, onSubmitted, onOpen }) {
   function whereHelpHtml() {
     const l = state.location;
     if (!l) return 'Type a station, stop or stop number, then choose it from the list.';
-    return `${icon('check', 16)}<span>${esc(l.typeLabel ?? 'Stop')}${l.code ? ` · Stop ${esc(l.code)}` : ''}</span>`;
+    return `${icon('check', 16)}<span>${stopDetails(l)}</span>`;
   }
   function updateWhereHelp() {
     const help = root.querySelector('#qr-where-help');
@@ -159,7 +159,7 @@ export function createQuickReport({ root, button, onSubmitted, onOpen }) {
       idPrefix: 'qr-stop',
       search: searchStops,
       renderItem: (l) => `<span>${icon(l.type?.endsWith('_STATION') ? 'station' : 'location', 18)}</span>
-        <span><strong>${esc(l.label)}</strong><small>${esc(l.typeLabel ?? 'Stop')}${l.code ? ` · Stop ${esc(l.code)}` : ''}</small></span>`,
+        <span><strong>${esc(l.label)}</strong><small>${stopDetails(l)}</small></span>`,
       emptyText: 'No matching stops',
       onChoose: (l) => {
         state.location = l;

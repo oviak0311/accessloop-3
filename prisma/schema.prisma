@@ -28,6 +28,16 @@ enum LocationType {
   GO_STATION // a GO Transit train station
 }
 
+// The transit agency that runs a stop.
+enum Agency {
+  TTC
+  GO
+  MIWAY // Mississauga
+  BRAMPTON // Brampton Transit
+  YRT // York Region Transit
+  DRT // Durham Region Transit
+}
+
 enum Direction {
   NORTHBOUND
   SOUTHBOUND
@@ -85,12 +95,15 @@ model Location {
   direction Direction?
   line      String?
   type      LocationType
-  code      String?      @unique // stop number from the transit agency's open data, if it has one
+  agency    Agency? // empty for the sample stops
+  code      String? // stop number on the pole, from the agency's open data. Agencies reuse numbers,
+  //                   so a number only has to be unique within one agency.
   latitude  Float? // for the map; optional so a stop can be added before it's placed
   longitude Float?
   reports   Report[]
 
   @@unique([name, spot, direction])
+  @@unique([agency, code])
   @@map("locations")
 }
 

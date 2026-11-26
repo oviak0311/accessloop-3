@@ -18,6 +18,7 @@ import {
   mountChrome,
   loadingMessage,
   errorMessage,
+  stopDetails,
 } from './ui.js';
 
 mountChrome('explore');
@@ -65,7 +66,7 @@ function aboutHtml() {
     <p>${report.description ? esc(report.description) : 'No description was added.'}</p>
     <dl class="detail-list">
       <div><dt>Location</dt><dd>${esc(l.label)}</dd></div>
-      <div><dt>Stop</dt><dd>${esc(l.typeLabel)}${l.line ? ` · ${esc(l.line)}` : ''}</dd></div>
+      <div><dt>Stop</dt><dd>${stopDetails(l, { line: true })}</dd></div>
       <div><dt>Barrier kind</dt><dd>${KIND_COPY[report.category.kind].title}</dd></div>
       <div><dt>Reported</dt><dd>${formatDateTime(report.createdAt)}</dd></div>
       ${report.resolvedAt ? `<div><dt>Fixed</dt><dd>${formatDateTime(report.resolvedAt)}</dd></div>` : ''}

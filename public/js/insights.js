@@ -9,6 +9,7 @@ import {
   mountChrome,
   loadingMessage,
   errorMessage,
+  stopDetails,
 } from './ui.js';
 
 mountChrome('insights');
@@ -74,7 +75,7 @@ function render(data) {
     ? `<ol class="rank-list">${recurringLocations
         .map(
           (l, i) => `<li><b aria-hidden="true">${i + 1}</b>
-            <span>${esc(l.label)}<small>${esc(l.typeLabel)}${l.line ? ` · ${esc(l.line)}` : ''}</small></span>
+            <span>${esc(l.label)}<small>${stopDetails(l, { line: true })}</small></span>
             <strong>${l.reports} reports</strong></li>`,
         )
         .join('')}</ol>`

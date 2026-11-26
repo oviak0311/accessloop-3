@@ -136,14 +136,16 @@ router.get('/locations', async (req, res) => {
   }
 
   if (!near) {
-    // Stations are looked up on their own as well, so a long street of bus stops can't push them
-    // off the list. Then the best matches go first (see rankStops in lib/stops.js).
+    // Stations, and stops whose number is exactly what was typed (several agencies can use the
+    // same number), are looked up on their own as well, so a long street of bus stops can't push
+    // them off the list. Then the best matches go first (see rankStops in lib/stops.js).
     const orderBy = [{ name: 'asc' }, { spot: 'asc' }];
-    const [stations, stops] = await Promise.all([
+    const [numbered, stations, stops] = await Promise.all([
+      prisma.location.findMany({ where: { code: String(q).trim() }, take }),
       prisma.location.findMany({ where: { AND: [...where.AND, { type: { in: STATION_TYPES } }] }, orderBy, take }),
       prisma.location.findMany({ where, orderBy, take: 100 }),
     ]);
-    const found = [...new Map([...stations, ...stops].map((l) => [l.id, l])).values()];
+    const found = [...new Map([...numbered, ...stations, ...stops].map((l) => [l.id, l])).values()];
     return res.json(rankStops(found, q).slice(0, take).map(formatLocation));
   }
 
@@ -248,7 +250,7 @@ async function findOrAddStop(raw) {
     const whole = await prisma.location.findFirst({ where: { name: stopName, spot, direction: null } });
     if (whole) return whole;
   }
-  const codeTaken = code ? await prisma.location.findUnique({ where: { code } }) : null;
+  const codeTaken = code ? await prisma.location.findFirst({ where: { code } }) : null;
   try {
     return await prisma.location.create({
       data: {

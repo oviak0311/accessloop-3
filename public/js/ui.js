@@ -85,6 +85,15 @@ export function barrierIcon(category, { size = 24, count } = {}) {
   return `<span class="barrier-icon barrier-icon-${name} kind-${category.kind.toLowerCase()}" aria-hidden="true">${icon(name, size)}${badge}</span>`;
 }
 
+// A stop's details on one line: "Bus stop · MiWay · Stop 0123". With { line: true }, its routes too.
+export function stopDetails(location, { line = false } = {}) {
+  const parts = [location.typeLabel ?? 'Stop'];
+  if (location.agencyLabel && location.type !== 'GO_STATION') parts.push(location.agencyLabel); // "GO station" says it already
+  if (line && location.line) parts.push(location.line);
+  if (location.code) parts.push(`Stop ${location.code}`);
+  return parts.map(esc).join(' · ');
+}
+
 export function placeIcon(location) {
   return `<span class="place-icon" aria-hidden="true">${icon(location.type?.endsWith('_STATION') ? 'station' : 'location', 20)}</span>`;
 }

@@ -25,9 +25,9 @@ accessloop/
 ├── prisma/
 │   ├── schema.prisma    Database schema (5 tables)
 │   ├── seed.js          Sample data (every sample report is marked isSample)
-│   ├── import-stops.js  Adds every TTC and GO station and stop to the database
-│   ├── build-stops.js   Builds that list from the agencies' open data
-│   └── data/stops.json  The list: about 9,900 stations and stops
+│   ├── import-stops.js  Adds every station and stop in the list to the database
+│   ├── build-stops.js   Builds that list from six transit agencies' open data
+│   └── data/stops.json  The list: about 22,000 stations and stops
 ├── public/              Front end (plain HTML, CSS and JavaScript, no build step)
 │   ├── index.html       The map: browse barriers, check a stop, report without leaving the map
 │   ├── report.html      Full report form in three steps
@@ -103,7 +103,9 @@ This adds 11 barrier types, 10 locations and 13 sample reports. You can run it a
 npm run db:import-stops
 ```
 
-This adds about 9,900 TTC and GO stations and stops (subway, LRT, GO train, bus and streetcar), so riders can find any stop by its name or the stop number on the pole. It takes about a minute. You can run it again at any time: stops that are already saved, and their reports, are left alone.
+This adds about 22,000 stations and stops from six agencies: the TTC, GO Transit, MiWay (Mississauga), Brampton Transit, York Region Transit and Durham Region Transit. That's every subway, LRT and GO station, and every bus and streetcar stop, so riders can find any stop by its name or the stop number on the pole. It takes a minute or two. You can run it again at any time: stops that are already saved, and their reports, are left alone.
+
+Each stop records which agency runs it. Agencies reuse stop numbers (the TTC, Brampton Transit, YRT and Durham all have a stop 1001), so a stop number only has to be unique within one agency, and searching a number shows every agency's stop with it.
 
 ### 7. Run it
 
@@ -132,18 +134,18 @@ npx prisma generate
 npm run db:import-stops
 ```
 
-The first adds the LRT station and GO station types to the database, the second updates the Prisma Client to match, and the third adds the stops.
+The first applies any new database changes (the LRT and GO station types, and the agency column), the second updates the Prisma Client to match, and the third adds the stops. Stops saved before the agency column existed get their agency filled in.
 
 ### Refreshing the stop list
 
-The TTC and Metrolinx update their schedules every few weeks, and stops change now and then. To refresh the list, download both GTFS zip files, unzip them, then run:
+Agencies update their schedules every few weeks, and stops change now and then. To refresh the list, download each agency's GTFS zip file, unzip them, then run:
 
 ```bash
-npm run db:build-stops -- --ttc path/to/ttc-folder --go path/to/go-folder
+npm run db:build-stops -- --ttc ttc-folder --go go-folder --miway miway-folder --brampton brampton-folder --yrt yrt-folder --drt drt-folder
 npm run db:import-stops
 ```
 
-`build-stops.js` reads each agency's `stops.txt`, `routes.txt`, `trips.txt` and `stop_times.txt`. It groups each station's platforms into one station, works out which lines serve each stop and, for TTC stops, which way buses and streetcars travel there. Then it saves the result to `prisma/data/stops.json`.
+`build-stops.js` reads each agency's `stops.txt`, `routes.txt`, `trips.txt` and `stop_times.txt`. It groups each station's platforms into one station, works out which routes serve each stop and which way buses and streetcars travel there, and tidies names (York Region Transit's are in capitals). Each agency writes directions in its trip headsigns differently, so the `AGENCIES` list at the top of the file says where to find them. Any agency left out of the command is skipped. Then it saves the result to `prisma/data/stops.json`.
 
 ---
 
@@ -199,7 +201,7 @@ Every page is a plain HTML file in `public/` with one JavaScript module. Pages g
 
 **Map images:** the map uses OpenStreetMap's own tiles, which need no API key. Their [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) asks for visible attribution (shown in the map's corner) and light use, which fits a student project. The tile address lives in one place, `public/js/mapbase.js`, so it's easy to switch. For example, CARTO's light style needs a free non-commercial key from [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey).
 
-**Credits:** map library [Leaflet](https://leafletjs.com) (BSD-2). Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Station and stop list from TTC schedule data published by the [City of Toronto](https://open.toronto.ca) (contains information licensed under the Open Government Licence – Toronto) and GO Transit schedule data from [Metrolinx](https://www.metrolinx.com/en/about-us/open-data) (Open Government Licence – Ontario). Font: DM Sans (SIL Open Font License).
+**Credits:** map library [Leaflet](https://leafletjs.com) (BSD-2). Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Station and stop list from each agency's open schedule data: TTC data published by the [City of Toronto](https://open.toronto.ca) (contains information licensed under the Open Government Licence – Toronto); GO Transit data from [Metrolinx](https://www.metrolinx.com/en/about-us/open-data) (Open Government Licence – Ontario); MiWay data from the [City of Mississauga](https://www.mississauga.ca/miway-transit/developer-download/); Brampton Transit data; York Region Transit data (contains public transit information made available under [YRT's Open Data Licence](https://www.yrt.ca/en/about-us/open-data-licence-agreement.aspx)); and Durham Region Transit data from [Durham Region](https://durham.ca/en/regional-government/open-data.aspx). AccessLoop is an independent student project and isn't run or endorsed by any of these agencies. Font: DM Sans (SIL Open Font License).
 
 ---
 
@@ -209,7 +211,7 @@ Every page is a plain HTML file in `public/` with one JavaScript module. Pages g
 |---|---|---|
 | GET | `/api/health` | Checks the database connection |
 | GET | `/api/categories` | Barrier types, with each kind's response options |
-| GET | `/api/locations` | Stations and stops, with map coordinates (all of them, about 9,900, if there is no search). Search with `q` (name, street, line or stop number) and/or `near=lat,lng` (nearest first), plus `limit` |
+| GET | `/api/locations` | Stations and stops, with map coordinates (all of them, about 22,000, if there is no search). Each has its `agency` and stop number (`code`). Search with `q` (name, street, line or stop number) and/or `near=lat,lng` (nearest first), plus `limit` |
 | GET | `/api/locations/:id` | One station or stop |
 | GET | `/api/reports` | Browse reports. Filters: `q`, `locationId`, `categoryId`, `kind`, `severity`, `status` (`open`, `closed` or a status), `limit` |
 | GET | `/api/reports/:id` | One report, with its status timeline, responses and location history |
