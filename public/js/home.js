@@ -193,7 +193,7 @@ createCombobox({
   list: $('stop-results'),
   idPrefix: 'stop',
   search: (q) => api(`/locations?q=${encodeURIComponent(q)}&limit=8`),
-  renderItem: (l) => `<span>${icon(l.type === 'SUBWAY_STATION' ? 'station' : 'location', 18)}</span>
+  renderItem: (l) => `<span>${icon(l.type?.endsWith('_STATION') ? 'station' : 'location', 18)}</span>
     <span><strong>${esc(l.label)}</strong><small>${esc(l.typeLabel ?? 'Stop')}${l.code ? ` · Stop ${esc(l.code)}` : ''}</small></span>`,
   emptyText: 'No matching stations or stops',
   onChoose: (l) => {

@@ -158,7 +158,7 @@ export function createQuickReport({ root, button, onSubmitted, onOpen }) {
       list: root.querySelector('#qr-search-results'),
       idPrefix: 'qr-stop',
       search: searchStops,
-      renderItem: (l) => `<span>${icon(l.type === 'SUBWAY_STATION' ? 'station' : 'location', 18)}</span>
+      renderItem: (l) => `<span>${icon(l.type?.endsWith('_STATION') ? 'station' : 'location', 18)}</span>
         <span><strong>${esc(l.label)}</strong><small>${esc(l.typeLabel ?? 'Stop')}${l.code ? ` · Stop ${esc(l.code)}` : ''}</small></span>`,
       emptyText: 'No matching stops',
       onChoose: (l) => {

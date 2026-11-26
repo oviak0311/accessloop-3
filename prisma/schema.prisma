@@ -24,6 +24,8 @@ enum LocationType {
   BUS_STOP
   STREETCAR_STOP
   STOP // a surface stop from the open data, served by buses, streetcars or both
+  LRT_STATION // Line 5 Eglinton and Line 6 Finch West
+  GO_STATION // a GO Transit train station
 }
 
 enum Direction {

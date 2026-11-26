@@ -12,6 +12,8 @@
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
+    "db:import-stops": "node --env-file=.env prisma/import-stops.js",
+    "db:build-stops": "node prisma/build-stops.js",
     "postinstall": "prisma generate"
   },
   "prisma": {

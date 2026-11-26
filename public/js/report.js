@@ -159,7 +159,7 @@ async function renderLocationResults() {
   const rows = list
     .map(
       (l) => `<button type="button" data-location="${l.id}">
-        <span class="location-result-icon">${icon(l.type === 'SUBWAY_STATION' ? 'station' : 'location')}</span>
+        <span class="location-result-icon">${icon(l.type?.endsWith('_STATION') ? 'station' : 'location')}</span>
         <span><strong>${esc(l.label)}</strong><small>${esc(l.typeLabel)}${l.line ? ` · ${esc(l.line)}` : ''}${l.code ? ` · Stop ${esc(l.code)}` : ''}</small></span>
         ${l.distanceKm !== undefined ? `<b>${formatKm(l.distanceKm)}</b>` : ''}
         ${icon('chevron')}

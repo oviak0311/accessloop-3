@@ -20,10 +20,14 @@ accessloop/
 │   ├── rules.js         Status and editing rules, labels
 │   ├── format.js        Builds titles, "last confirmed", flags and other derived values
 │   ├── http.js          Errors, input checks, edit key hashing
+│   ├── stops.js         Matching and sorting stations and stops
 │   └── prisma.js        Shared database client
 ├── prisma/
 │   ├── schema.prisma    Database schema (5 tables)
-│   └── seed.js          Sample data (every sample report is marked isSample)
+│   ├── seed.js          Sample data (every sample report is marked isSample)
+│   ├── import-stops.js  Adds every TTC and GO station and stop to the database
+│   ├── build-stops.js   Builds that list from the agencies' open data
+│   └── data/stops.json  The list: about 9,900 stations and stops
 ├── public/              Front end (plain HTML, CSS and JavaScript, no build step)
 │   ├── index.html       The map: browse barriers, check a stop, report without leaving the map
 │   ├── report.html      Full report form in three steps
@@ -93,7 +97,15 @@ npm run db:seed
 
 This adds 11 barrier types, 10 locations and 13 sample reports. You can run it again at any time: it replaces the sample reports and never touches real ones.
 
-### 6. Run it
+### 6. Add every station and stop
+
+```bash
+npm run db:import-stops
+```
+
+This adds about 9,900 TTC and GO stations and stops (subway, LRT, GO train, bus and streetcar), so riders can find any stop by its name or the stop number on the pole. It takes about a minute. You can run it again at any time: stops that are already saved, and their reports, are left alone.
+
+### 7. Run it
 
 ```bash
 npm run dev
@@ -111,6 +123,27 @@ npm run db:seed
 ```
 
 The first adds `latitude` and `longitude` to the `locations` table. The second gives the sample stops their coordinates.
+
+### Adding the full stop list to an existing install
+
+```bash
+npm run db:deploy
+npx prisma generate
+npm run db:import-stops
+```
+
+The first adds the LRT station and GO station types to the database, the second updates the Prisma Client to match, and the third adds the stops.
+
+### Refreshing the stop list
+
+The TTC and Metrolinx update their schedules every few weeks, and stops change now and then. To refresh the list, download both GTFS zip files, unzip them, then run:
+
+```bash
+npm run db:build-stops -- --ttc path/to/ttc-folder --go path/to/go-folder
+npm run db:import-stops
+```
+
+`build-stops.js` reads each agency's `stops.txt`, `routes.txt`, `trips.txt` and `stop_times.txt`. It groups each station's platforms into one station, works out which lines serve each stop and, for TTC stops, which way buses and streetcars travel there. Then it saves the result to `prisma/data/stops.json`.
 
 ---
 
@@ -166,7 +199,7 @@ Every page is a plain HTML file in `public/` with one JavaScript module. Pages g
 
 **Map images:** the map uses OpenStreetMap's own tiles, which need no API key. Their [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) asks for visible attribution (shown in the map's corner) and light use, which fits a student project. The tile address lives in one place, `public/js/mapbase.js`, so it's easy to switch. For example, CARTO's light style needs a free non-commercial key from [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey).
 
-**Credits:** map library [Leaflet](https://leafletjs.com) (BSD-2). Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Font: DM Sans (SIL Open Font License).
+**Credits:** map library [Leaflet](https://leafletjs.com) (BSD-2). Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Station and stop list from TTC schedule data published by the [City of Toronto](https://open.toronto.ca) (contains information licensed under the Open Government Licence – Toronto) and GO Transit schedule data from [Metrolinx](https://www.metrolinx.com/en/about-us/open-data) (Open Government Licence – Ontario). Font: DM Sans (SIL Open Font License).
 
 ---
 
@@ -176,7 +209,7 @@ Every page is a plain HTML file in `public/` with one JavaScript module. Pages g
 |---|---|---|
 | GET | `/api/health` | Checks the database connection |
 | GET | `/api/categories` | Barrier types, with each kind's response options |
-| GET | `/api/locations` | Stations and stops, with map coordinates. Search with `q` (name, street, line or stop number) and/or `near=lat,lng` (nearest first), plus `limit` |
+| GET | `/api/locations` | Stations and stops, with map coordinates (all of them, about 9,900, if there is no search). Search with `q` (name, street, line or stop number) and/or `near=lat,lng` (nearest first), plus `limit` |
 | GET | `/api/locations/:id` | One station or stop |
 | GET | `/api/reports` | Browse reports. Filters: `q`, `locationId`, `categoryId`, `kind`, `severity`, `status` (`open`, `closed` or a status), `limit` |
 | GET | `/api/reports/:id` | One report, with its status timeline, responses and location history |

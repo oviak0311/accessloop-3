@@ -86,7 +86,7 @@ export function barrierIcon(category, { size = 24, count } = {}) {
 }
 
 export function placeIcon(location) {
-  return `<span class="place-icon" aria-hidden="true">${icon(location.type === 'SUBWAY_STATION' ? 'station' : 'location', 20)}</span>`;
+  return `<span class="place-icon" aria-hidden="true">${icon(location.type?.endsWith('_STATION') ? 'station' : 'location', 20)}</span>`;
 }
 
 // ---------- Labels ----------

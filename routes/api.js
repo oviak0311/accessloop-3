@@ -25,6 +25,7 @@ import {
   isClosed,
 } from '../lib/rules.js';
 import { formatReport, formatCategory, formatLocation, formatHistory, formatResponses } from '../lib/format.js';
+import { distanceKm, stopKey, rankStops, STATION_TYPES } from '../lib/stops.js';
 
 const router = Router();
 
@@ -107,14 +108,6 @@ function parseNear(near) {
   return { lat, lng };
 }
 
-function distanceKm(lat1, lng1, lat2, lng2) {
-  const rad = (d) => (d * Math.PI) / 180;
-  const h =
-    Math.sin(rad(lat2 - lat1) / 2) ** 2 +
-    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lng2 - lng1) / 2) ** 2;
-  return 6371 * 2 * Math.asin(Math.sqrt(h));
-}
-
 // READ: stations and stops.
 // No filters: every location. With thousands of stops, the front end searches instead:
 // ?q=      words in the name, spot or line, or the stop number on the pole
@@ -143,14 +136,26 @@ router.get('/locations', async (req, res) => {
   }
 
   if (!near) {
-    const locations = await prisma.location.findMany({ where, orderBy: [{ name: 'asc' }, { spot: 'asc' }], take });
-    return res.json(locations.map(formatLocation));
+    // Stations are looked up on their own as well, so a long street of bus stops can't push them
+    // off the list. Then the best matches go first (see rankStops in lib/stops.js).
+    const orderBy = [{ name: 'asc' }, { spot: 'asc' }];
+    const [stations, stops] = await Promise.all([
+      prisma.location.findMany({ where: { AND: [...where.AND, { type: { in: STATION_TYPES } }] }, orderBy, take }),
+      prisma.location.findMany({ where, orderBy, take: 100 }),
+    ]);
+    const found = [...new Map([...stations, ...stops].map((l) => [l.id, l])).values()];
+    return res.json(rankStops(found, q).slice(0, take).map(formatLocation));
   }
 
-  // Nearest first. A box of about 20 km keeps the work small before exact distances are worked out.
+  // Nearest first. Only stops in a box around the point are loaded before exact distances are
+  // worked out: about 2 km each way, or about 20 km if that finds too few.
   const { lat, lng } = parseNear(near);
-  where.AND.push({ latitude: { gte: lat - 0.2, lte: lat + 0.2 } }, { longitude: { gte: lng - 0.3, lte: lng + 0.3 } });
-  const candidates = await prisma.location.findMany({ where });
+  let candidates = [];
+  for (const size of [0.02, 0.2]) {
+    const box = [{ latitude: { gte: lat - size, lte: lat + size } }, { longitude: { gte: lng - size * 1.5, lte: lng + size * 1.5 } }];
+    candidates = await prisma.location.findMany({ where: { AND: [...where.AND, ...box] } });
+    if (candidates.length >= take) break;
+  }
   const nearest = candidates
     .map((l) => ({ ...formatLocation(l), distanceKm: distanceKm(lat, lng, l.latitude, l.longitude) }))
     .sort((a, b) => a.distanceKm - b.distanceKm)
@@ -212,8 +217,6 @@ router.get('/reports/:id', async (req, res) => {
 // { name, lat, lng, code?, mode? }. If it matches a stop already saved nearby (same stop number,
 // or the same name within about 150 m), that one is used; otherwise the stop is added, so its
 // history starts here.
-const stopKey = (name) => name.toLowerCase().replace(/\bstation\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-
 async function findOrAddStop(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new HttpError(400, 'Choose a station or stop.');
   const name = parseOptionalText(raw.name, 120, 'Stop name');
@@ -367,7 +370,7 @@ router.post('/reports/:id/responses', async (req, res) => {
 router.get('/insights', async (req, res) => {
   const notDuplicate = { status: { not: 'DUPLICATE' } };
 
-  const [total, open, fixed, samples, byCategoryRows, byLocationRows, categories, locations, fixTimes, monthly] =
+  const [total, open, fixed, samples, byCategoryRows, byLocationRows, categories, fixTimes, monthly] =
     await Promise.all([
       prisma.report.count({ where: notDuplicate }),
       prisma.report.count({ where: { status: { notIn: CLOSED_STATUSES } } }),
@@ -376,7 +379,6 @@ router.get('/insights', async (req, res) => {
       prisma.report.groupBy({ by: ['categoryId'], where: notDuplicate, _count: { _all: true } }),
       prisma.report.groupBy({ by: ['locationId'], where: notDuplicate, _count: { _all: true } }),
       prisma.category.findMany(),
-      prisma.location.findMany(),
       // Average time from report to fix, by kind. Only Resolved, Cleared and Built count.
       prisma.$queryRaw`
         SELECT c."kind" AS kind,
@@ -397,6 +399,8 @@ router.get('/insights', async (req, res) => {
         ORDER BY 1`,
     ]);
 
+  // Only the stops that have reports. With every TTC and GO stop saved, loading them all would be slow.
+  const locations = await prisma.location.findMany({ where: { id: { in: byLocationRows.map((row) => row.locationId) } } });
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const locationById = new Map(locations.map((l) => [l.id, l]));
 
