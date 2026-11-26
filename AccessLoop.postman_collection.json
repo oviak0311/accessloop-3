@@ -354,7 +354,7 @@
           ]
         },
         {
-          "name": "Create a report at a stop from a route (no severity)",
+          "name": "Create a report at a new stop (no severity)",
           "request": {
             "method": "POST",
             "header": [
@@ -373,7 +373,7 @@
                 "reports"
               ]
             },
-            "description": "Reports at a stop that AccessLoop may not have saved yet, the way the report pop-up does from a planned route. The server reuses a saved stop with the same name nearby, or adds the stop. With no severity, the barrier type sets it.",
+            "description": "Reports at a stop that AccessLoop may not have saved yet. The server reuses a saved stop with the same name nearby, or adds the stop. With no severity, the barrier type sets it.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"categoryId\": 5,\n  \"place\": {\n    \"name\": \"The Gore Rd n/of Castlemore Rd\",\n    \"lat\": 43.79748,\n    \"lng\": -79.68372\n  },\n  \"description\": \"Snow bank between the curb and the bus door.\"\n}",

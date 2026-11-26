@@ -294,7 +294,7 @@ export const sheetLinksHtml = () => `
     <a href="insights.html">Insights</a>
     <a href="report.html">Full report form</a>
     <a href="admin.html">Accessibility team</a>
-    <a href="https://github.com/oviak0311/accessloop">Source code</a>
+    <a href="https://github.com/oviak0311/accessloop-3">Source code</a>
     <span>An independent shared logbook, not an official transit service.</span>
   </nav>`;
 
@@ -344,7 +344,7 @@ export function mountChrome(active) {
         <a href="insights.html">Insights</a>
         <a href="report.html">Full report form</a>
         <a href="admin.html">Accessibility team</a>
-        <a href="https://github.com/oviak0311/accessloop">Source code</a>
+        <a href="https://github.com/oviak0311/accessloop-3">Source code</a>
       </nav>`;
   }
   fillIcons();

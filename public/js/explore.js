@@ -45,13 +45,11 @@ const pinCard = createPinCard(map, {
   onClose: () => pins.setActive(state.view === 'barrier' ? state.barrier.reports[state.barrier.index].location.id : null),
   onUpdated: (updated) => (state.reports = state.reports.map((r) => (r.id === updated.id ? updated : r))),
   onReportHere: (location) => quickReport.open({ preset: location }),
-  onPlanHere: (l) => (window.location.href = `index.html?to=${l.latitude},${l.longitude}&toName=${encodeURIComponent(l.label)}`),
 });
 const sheet = createSheet($('sheet'), { footer: sheetLinksHtml() });
 const quickReport = createQuickReport({
   root: $('quick-report'),
   button: $('report-button'),
-  getRouteStops: () => null,
   onSubmitted: () => load({ fit: false }),
 });
 
@@ -210,9 +208,6 @@ $('sheet').addEventListener('click', async (e) => {
     renderBarrier();
   } else if (button.dataset.action === 'report-here') {
     quickReport.open({ preset: b.reports[b.index].location });
-  } else if (button.dataset.action === 'plan-here') {
-    const l = b.reports[b.index].location;
-    window.location.href = `index.html?to=${l.latitude},${l.longitude}&toName=${encodeURIComponent(l.label)}`;
   }
 });
 

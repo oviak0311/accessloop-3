@@ -7,7 +7,6 @@ import { prisma } from './lib/prisma.js';
 import { HttpError } from './lib/http.js';
 import apiRouter from './routes/api.js';
 import adminRouter from './routes/admin.js';
-import tripsRouter from './routes/trips.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,7 +23,6 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.use('/api/admin', adminRouter);
-app.use('/api', tripsRouter);
 app.use('/api', apiRouter);
 
 // Unknown API routes

@@ -208,7 +208,7 @@ router.get('/reports/:id', async (req, res) => {
   res.json(await getReportDetail(parseId(req.params.id, 'Report ID')));
 });
 
-// A stop chosen from a planned route or the place search, which AccessLoop may not know yet:
+// A stop AccessLoop doesn't have saved yet, sent through the API:
 // { name, lat, lng, code?, mode? }. If it matches a stop already saved nearby (same stop number,
 // or the same name within about 150 m), that one is used; otherwise the stop is added, so its
 // history starts here.
@@ -268,8 +268,8 @@ async function findOrAddStop(raw) {
 }
 
 // CREATE: submit a new report. Returns the private edit key once.
-// The location is either { locationId } for a saved stop, or { place } for a stop from a planned
-// route or the place search. Severity is optional; without it, the barrier type sets it.
+// The location is either { locationId } for a saved stop (what the website sends), or { place }
+// for a stop that isn't saved yet. Severity is optional; without it, the barrier type sets it.
 router.post('/reports', async (req, res) => {
   const body = requireObjectBody(req.body);
 

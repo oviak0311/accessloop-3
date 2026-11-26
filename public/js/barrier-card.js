@@ -16,7 +16,7 @@ import {
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // view: { reports, index, answered, error }
-export function barrierCardHtml(view, { planLink = true } = {}) {
+export function barrierCardHtml(view) {
   const report = view.reports[view.index];
   const [still, gone] = report.category.responseOptions;
   const confirmed = report.responseCounts?.[still.value] ?? 0;
@@ -73,11 +73,6 @@ export function barrierCardHtml(view, { planLink = true } = {}) {
       <div class="barrier-view-links">
         <a class="text-link" href="barrier.html?id=${report.id}">Full report ${icon('arrow', 16)}</a>
         <button type="button" class="text-link" data-action="report-here" data-location="${l.id}">Report something else here</button>
-        ${
-          planLink && l.latitude != null
-            ? `<button type="button" class="text-link" data-action="plan-here" data-location="${l.id}">Plan a trip here</button>`
-            : ''
-        }
       </div>
     </div>
   </article>`;

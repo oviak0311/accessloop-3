@@ -76,7 +76,6 @@ function aboutHtml() {
         ? `<div class="mini-map" id="mini-map" role="region" aria-label="Map showing ${esc(l.label)}"></div>
            <p class="detail-links">
              <a class="text-link" href="index.html?location=${l.id}">See it on the live map ${icon('arrow', 18)}</a>
-             <a class="text-link" href="index.html?to=${l.latitude},${l.longitude}&amp;toName=${encodeURIComponent(l.label)}">Plan a trip here ${icon('arrow', 18)}</a>
            </p>`
         : ''
     }

@@ -1,31 +1,19 @@
-// Quick report pop-up: one page — where it is, what it is, anything else — then the edit key.
-// Opens from the floating + Report button, a barrier's card, or a stop on your route, as a
-// dialog over the dimmed map, so riders never leave the map or their route. The browser's
-// <dialog> keeps keyboard focus inside it, closes it on Escape and announces it to screen readers.
+// Quick report pop-up: one page (where it is, what it is, anything else), then the edit key.
+// Opens from the floating + Report button or a barrier's card, as a dialog over the dimmed map,
+// so riders never leave the map. The browser's <dialog> keeps keyboard focus inside it, closes
+// it on Escape and announces it to screen readers.
 // Riders aren't asked about severity anywhere: the barrier type sets it (see defaultSeverity in
 // lib/rules.js), and only the accessibility team sees it, to sort their queue.
 import { api } from './api.js';
 import { esc, icon, barrierIcon, KIND_ORDER } from './ui.js';
 import { createCombobox } from './combobox.js';
 
-const stopKey = (name) => name.toLowerCase().replace(/\bstation\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-
-// A stop from a planned route or the place search, which AccessLoop may not have saved yet.
-// The server matches it to a saved stop nearby, or adds it, when the report is sent.
-export const routeStop = ({ name, lat, lng, stopCode = null, mode = null, typeLabel = 'Stop on your route' }) => ({
-  id: null,
-  label: name,
-  typeLabel,
-  code: stopCode,
-  place: { name, lat, lng, code: stopCode, mode },
-});
-
-export function createQuickReport({ root, button, getRouteStops, onSubmitted, onOpen }) {
+export function createQuickReport({ root, button, onSubmitted, onOpen }) {
   const state = {};
   let categories = null;
   let categoryError = null;
 
-  // `preset` is a saved stop ({ id, label, … }) or a stop made with routeStop().
+  // `preset` is a saved station or stop ({ id, label, … }).
   function reset(preset) {
     Object.assign(state, {
       step: 'form',
@@ -87,7 +75,7 @@ export function createQuickReport({ root, button, getRouteStops, onSubmitted, on
   // Below the search: what to do, or which stop is chosen.
   function whereHelpHtml() {
     const l = state.location;
-    if (!l) return 'Type a station, street or stop number, then choose it from the list.';
+    if (!l) return 'Type a station, stop or stop number, then choose it from the list.';
     return `${icon('check', 16)}<span>${esc(l.typeLabel ?? 'Stop')}${l.code ? ` · Stop ${esc(l.code)}` : ''}</span>`;
   }
   function updateWhereHelp() {
@@ -111,7 +99,7 @@ export function createQuickReport({ root, button, getRouteStops, onSubmitted, on
           <label for="qr-search">Where is it?</label>
           <div class="inline-input">
             ${icon('search', 18)}
-            <input id="qr-search" type="search" autocomplete="off" placeholder="Station, street or stop number"
+            <input id="qr-search" type="search" autocomplete="off" placeholder="Station, stop or stop number"
               value="${esc(state.location?.label ?? '')}" required aria-describedby="qr-where-help"
               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="qr-search-results">
           </div>
@@ -150,7 +138,7 @@ export function createQuickReport({ root, button, getRouteStops, onSubmitted, on
         </div>
         <p class="key-help" role="status">${state.copied === 'selected' ? 'The key is selected. Press Ctrl+C (or ⌘C on a Mac) to copy it.' : ''}</p>
       </section>
-      <button type="button" class="button" data-action="close">${getRouteStops() ? 'Back to your route' : 'Back to the map'}</button>
+      <button type="button" class="button" data-action="close">Back to the map</button>
       <a class="text-link" href="barrier.html?id=${report.id}">View your report ${icon('arrow', 16)}</a>
     </div>`;
   }
@@ -161,22 +149,9 @@ export function createQuickReport({ root, button, getRouteStops, onSubmitted, on
   }
 
   // ---------- Stop search ----------
-  // AccessLoop's saved stops come first; any other transit stop the trip planner knows comes
-  // after, so riders can report at a stop nobody has reported before.
+  // Searches the stations and stops saved in AccessLoop's database.
 
-  async function searchStops(q) {
-    const query = encodeURIComponent(q);
-    const [saved, others] = await Promise.all([
-      api(`/locations?q=${query}&limit=6`),
-      api(`/places?q=${query}`).catch(() => []), // the trip planner may be unavailable
-    ]);
-    const known = new Set(saved.map((l) => stopKey(l.name)));
-    const extra = others
-      .filter((p) => p.type === 'STOP' && !known.has(stopKey(p.name)))
-      .slice(0, 5)
-      .map((p) => routeStop({ name: p.name, lat: p.lat, lng: p.lng, typeLabel: `Transit stop${p.area ? ` · ${p.area}` : ''}` }));
-    return [...saved, ...extra];
-  }
+  const searchStops = (q) => api(`/locations?q=${encodeURIComponent(q)}&limit=8`);
 
   function wireSearch() {
     createCombobox({
@@ -212,10 +187,9 @@ export function createQuickReport({ root, button, getRouteStops, onSubmitted, on
     submitButton.disabled = true;
     submitButton.textContent = 'Sending…';
     try {
-      const where = state.location.id ? { locationId: state.location.id } : { place: state.location.place };
       state.created = await api('/reports', {
         method: 'POST',
-        body: { categoryId: state.categoryId, ...where, description: state.description.trim() || null },
+        body: { categoryId: state.categoryId, locationId: state.location.id, description: state.description.trim() || null },
       });
       state.step = 'done';
       render();
@@ -271,7 +245,7 @@ export function createQuickReport({ root, button, getRouteStops, onSubmitted, on
     e.preventDefault();
     submit(e.target);
   });
-  // Runs however the dialog closes: the X, Escape, "Back to your route" or a click outside.
+  // Runs however the dialog closes: the X, Escape, "Back to the map" or a click outside.
   root.addEventListener('close', () => {
     button.setAttribute('aria-expanded', 'false');
     // The browser returns focus to whatever opened the dialog; if that's gone, use the Report button.

@@ -9,7 +9,7 @@ import { barrierCardHtml, saveResponse } from './barrier-card.js';
 
 const PIN_HEIGHT = 46; // the card's tip sits just above the pin's head
 
-export function createPinCard(map, { getAvoid, onOpen, onClose, onUpdated, onReportHere, onPlanHere, planLink = true } = {}) {
+export function createPinCard(map, { getAvoid, onOpen, onClose, onUpdated, onReportHere } = {}) {
   let view = null; // { reports, index, answered, error, opener }
   const popup = L.popup({
     className: 'pin-popup',
@@ -23,7 +23,7 @@ export function createPinCard(map, { getAvoid, onOpen, onClose, onUpdated, onRep
   const current = () => view && view.reports[view.index];
   const html = () =>
     `<button type="button" class="pin-popup-close" data-action="close" aria-label="Close barrier details">${icon('close', 20)}</button>
-    ${barrierCardHtml(view, { planLink })}`;
+    ${barrierCardHtml(view)}`;
   const focusTitle = () => popup.getElement()?.querySelector('#barrier-view-title')?.focus({ preventScroll: true });
 
   function render() {
@@ -91,9 +91,6 @@ export function createPinCard(map, { getAvoid, onOpen, onClose, onUpdated, onRep
         render();
       } else if (button.dataset.action === 'report-here') {
         onReportHere?.(report.location);
-      } else if (button.dataset.action === 'plan-here') {
-        close();
-        onPlanHere?.(report.location);
       }
     });
   });
